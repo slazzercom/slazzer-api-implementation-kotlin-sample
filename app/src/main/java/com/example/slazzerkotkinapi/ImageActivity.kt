@@ -5,12 +5,10 @@ import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.SystemClock
 import android.provider.MediaStore
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Chronometer
@@ -43,7 +41,7 @@ class ImageActivity : AppCompatActivity(), View.OnClickListener,EasyPermissions.
     private lateinit var chronometer: Chronometer
     private lateinit var pDialog: ProgressDialog
     private var postPath: String? = null
-    private var API_KEY:String ="9fd6e94f3dd******7961cae090cdac6"
+    private var API_KEY:String ="2ac2be50aa4d4cc19ee194f1fd458dfe*****"
     private val READ_STORAGE_PERMISSION_REQUEST = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,7 +82,7 @@ class ImageActivity : AppCompatActivity(), View.OnClickListener,EasyPermissions.
                         "Our App Requires a permission to access your storage",
                         READ_STORAGE_PERMISSION_REQUEST,
                         permission
-                    );
+                    )
                 }
 
 
@@ -147,17 +145,16 @@ class ImageActivity : AppCompatActivity(), View.OnClickListener,EasyPermissions.
         if (pDialog.isShowing) pDialog.dismiss()
     }
 
-    // Uploading Image/Video
-    private fun uploadFile(photoPath:String?) {
-        chronometer.setBase(SystemClock.elapsedRealtime());
+    private fun uploadFile(inputImagePath:String?) {
+        chronometer.base = SystemClock.elapsedRealtime()
         chronometer.start()
-        if (photoPath == null || photoPath == "") {
-            Toast.makeText(this, "please select an image ", Toast.LENGTH_LONG).show()
+        if (inputImagePath == null || inputImagePath == "") {
+            Toast.makeText(this, "Please select an image", Toast.LENGTH_LONG).show()
             return
         } else {
             showpDialog()
             val map = HashMap<String, RequestBody>()
-            val file = File(photoPath!!)
+            val file = File(inputImagePath)
             val requestBody = RequestBody.create(MediaType.parse("*/*"), file)
             map.put("source_image_file\"; filename=\"" + file.name + "\"", requestBody)
             val getResponse = AppConfig.getRetrofit().create(ApiConfig::class.java)
@@ -171,32 +168,24 @@ class ImageActivity : AppCompatActivity(), View.OnClickListener,EasyPermissions.
                         if (response.body() != null) {
                             hidepDialog()
                             try {
-                                val downloadedFile: File = File(
-                                    this@ImageActivity.getCacheDir(),
-                                    "opt-put-results.png"
-                                )
-                                val sink: BufferedSink = Okio.buffer(Okio.sink(downloadedFile))
+                                val outputImageFile: File = File(this@ImageActivity.cacheDir,""+System.currentTimeMillis()+"opt-put-results.png")
+                                val sink: BufferedSink = Okio.buffer(Okio.sink(outputImageFile))
                                 sink.writeAll(response.body().source())
                                 sink.close()
                                 chronometer.stop()
-                                Glide.with(this@ImageActivity).load(downloadedFile).into(imageView)
+                                Glide.with(this@ImageActivity).load(outputImageFile).into(imageView)
                             } catch (ex: Exception) {
                                 print(ex.toString())
                             }
                         }
                     } else {
                         hidepDialog()
-                        Toast.makeText(
-                            applicationContext,
-                            "problem uploading image",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(applicationContext, "Unable to upload image", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     hidepDialog()
-                    t.message?.let { Log.v("Response gotten is", it) }
                 }
             })
         }
