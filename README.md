@@ -1,2 +1,3 @@
 # slazzer-api-implementation-kotlin-sample
-Slazzer new Api  for faster output  implementation sample using kotlin
+Slazzer Api v2.0  implementation sample code 
+It will help to implement api directly using kotlin android. 
